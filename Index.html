@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bengkel_officer - Contributor Board Ultimate Pro v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap');
+        .drag-over { border-color: #6366f1 !important; background-color: rgba(99, 102, 241, 0.15) !important; transform: scale(1.01); }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; cursor: pointer; padding: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+        .tab-active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .grid-slot { cursor: pointer; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.4); border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans relative selection:bg-indigo-500/30">
+
+    <!-- MODAL LOGIN KODE AKSES -->
+    <div id="authModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-50 flex items-center justify-center p-4 transition-opacity duration-500">
+        <div class="bg-slate-900 border border-slate-700/80 p-8 rounded-3xl shadow-2xl max-w-md w-full space-y-6 text-center">
+            <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl mx-auto flex items-center justify-center font-black text-3xl shadow-lg shadow-indigo-500/30 text-white">B</div>
+            <div>
+                <h2 class="text-xl font-black text-white">Bengkel<span class="text-indigo-400">_officer</span> <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full ml-1">PRO</span></h2>
+                <p class="text-xs text-slate-400 mt-1">Masukkan kode akses rahasia untuk membuka aplikasi.</p>
+            </div>
+            <div class="space-y-3">
+                <input type="password" id="accessCodeInput" placeholder="Masukkan Kode Akses..." class="w-full bg-slate-950 border border-slate-700 text-white text-center tracking-widest font-bold p-3.5 rounded-2xl outline-none focus:border-indigo-500 text-base shadow-inner" onkeydown="if(event.key === 'Enter') verifyCode()">
+                <button onclick="verifyCode()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/30 transition active:scale-95 text-xs uppercase tracking-wider">Masuk Aplikasi</button>
+                <p id="errorMsg" class="text-xs text-red-400 font-semibold hidden">❌ Kode akses salah! Hubungi administrator.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- KONTEN UTAMA APLIKASI -->
+    <div id="appMainContent" class="max-w-[1700px] mx-auto opacity-0 pointer-events-none transition-opacity duration-500 space-y-6">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center bg-slate-800/50 backdrop-blur-md p-6 rounded-3xl border border-slate-700/50 shadow-xl gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shadow-indigo-500/30 text-white">B</div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white">Bengkel<span class="text-indigo-400">_officer</span> <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full ml-2">PRO v4.0</span></h1>
+                    <p class="text-xs text-slate-400 font-medium">Contributor Automation & Design Suite</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 bg-slate-900/80 px-5 py-2.5 rounded-2xl border border-slate-700">
+                <div class="text-xs text-slate-400">Slot Terisi: <span id="fileCount" class="font-bold text-indigo-400 text-sm">0</span> / <span id="maxFiles" class="text-white font-bold">24</span></div>
+            </div>
+        </header>
+
+        <!-- LAYOUT DUA KOLOM (STICKY SIDEBAR) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- KOLOM KIRI: PANEL KONTROL LENGKAP -->
+            <div class="lg:col-span-5 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar pr-2">
+                
+                <!-- Area Dropzone Kompak -->
+                <div id="dropZone" class="bg-slate-800/50 border border-dashed border-indigo-500/50 rounded-2xl p-4 text-center cursor-pointer hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-4 shadow-md" onclick="document.getElementById('fileInput').click()">
+                    <div class="w-10 h-10 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center shrink-0 shadow-inner transition-transform" id="dropIcon">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                    <div class="text-left">
+                        <h2 id="dropText" class="font-bold text-white text-xs mb-0.5">Tarik & Lepas File Ikon (SVG/PNG)</h2>
+                        <p class="text-[11px] text-slate-400">Otomatis isi grid secara instan.</p>
+                    </div>
+                    <input type="file" id="fileInput" class="hidden" multiple accept=".svg, .png">
+                </div>
+
+                <!-- FITUR BARU: TEMPLATE PRESET CEPAT (QUICK THEMES) -->
+                <div class="bg-slate-800/80 backdrop-blur-md p-5 rounded-3xl border border-slate-700/60 shadow-xl space-y-3">
+                    <h2 class="font-bold text-xs text-indigo-400 uppercase tracking-wider border-b border-slate-700 pb-2">Preset Tema Instan</h2>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="applyTheme('shutterstock')" class="py-2 bg-blue-900/40 hover:bg-blue-600/30 border border-blue-500/30 rounded-xl text-xs font-bold text-blue-300 transition">Standard Blue</button>
+                        <button onclick="applyTheme('neon')" class="py-2 bg-purple-900/40 hover:bg-purple-600/30 border border-purple-500/30 rounded-xl text-xs font-bold text-purple-300 transition">Dark Neon</button>
+                        <button onclick="applyTheme('minimal')" class="py-2 bg-slate-900 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 transition">Minimalist</button>
+                    </div>
+                </div>
+
+                <!-- Konfigurasi Banner Dasar -->
+                <div class="bg-slate-800/80 backdrop-blur-md p-6 rounded-3xl border border-slate-700/60 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <h2 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">Desain Banner & Teks</h2>
+                        <div class="flex bg-slate-900 p-0.5 rounded-xl border border-slate-700 gap-1">
+                            <button id="btnModeLogo" onclick="setBannerMode('logo')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition tab-active">Logo</button>
+                            <button id="btnModeText" onclick="setBannerMode('text')" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">Teks</button>
+                            <button id="btnModeNone" onclick="setBannerMode('none')" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">Full</button>
+                        </div>
+                    </div>
+                    
+                    <div id="bannerSettingsPanel" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Judul Atas</label>
+                                <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                                    <input type="color" id="titleTopColor" value="#FFFFFF" oninput="saveAndRender()">
+                                    <input type="text" id="titleTop" value="NATURE" class="w-full bg-transparent text-white text-xs font-bold outline-none uppercase" oninput="saveAndRender()">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Judul Bawah</label>
+                                <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                                    <input type="color" id="titleBottomColor" value="#60A5FA" oninput="saveAndRender()">
+                                    <input type="text" id="titleBottom" value="ICONS" class="w-full bg-transparent text-white text-xs font-bold outline-none uppercase" oninput="saveAndRender()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Bg Banner</label>
+                                <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                                    <input type="color" id="bannerBgColor" value="#1E3A8A" oninput="saveAndRender()">
+                                    <span class="text-[10px] text-slate-300">Warna</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Bg Grid</label>
+                                <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                                    <input type="color" id="gridBgColor" value="#FFFFFF" oninput="saveAndRender()">
+                                    <button onclick="setGridTransparent()" class="text-[9px] bg-indigo-600 px-2 py-1 rounded text-white font-bold ml-auto">Transparan</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase mb-1">
+                                <span>Transparansi Grid</span>
+                                <span id="gridOpacityVal" class="text-indigo-400">100%</span>
+                            </div>
+                            <input type="range" id="gridOpacityRange" min="0" max="100" value="100" class="w-full accent-indigo-500 cursor-pointer" oninput="saveAndRender()">
+                        </div>
+
+                        <div id="logoUploadSection" class="pt-1">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Upload Logo Khusus</label>
+                            <div class="flex items-center gap-2">
+                                <button onclick="document.getElementById('bannerLogoInput').click()" class="w-full bg-slate-900 hover:bg-slate-700 border border-slate-700 text-slate-200 p-2 rounded-xl text-xs font-bold transition">Pilih File Logo</button>
+                                <input type="file" id="bannerLogoInput" class="hidden" accept=".svg, .png">
+                                <button onclick="resetBannerLogo()" id="resetLogoBtn" class="hidden p-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Ukuran, Grid, & Jarak Spasi (Padding) -->
+                <div class="bg-slate-800/80 backdrop-blur-md p-6 rounded-3xl border border-slate-700/60 shadow-xl space-y-4">
+                    <h2 class="font-bold text-xs text-indigo-400 uppercase tracking-wider border-b border-slate-700 pb-2">Kanvas, Grid & Spasi</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Lebar (Width)</label>
+                            <input type="number" id="customWidth" value="5400" oninput="saveAndRender()" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl text-white text-xs text-center font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tinggi (Height)</label>
+                            <input type="number" id="customHeight" value="2200" oninput="saveAndRender()" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl text-white text-xs text-center font-bold outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Kolom</label>
+                            <input type="number" id="gridCols" value="6" min="2" max="15" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl font-bold text-white text-xs text-center outline-none" oninput="saveAndRender()">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Baris</label>
+                            <input type="number" id="gridRows" value="4" min="2" max="15" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl font-bold text-white text-xs text-center outline-none" oninput="saveAndRender()">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-indigo-400 uppercase mb-1">Padding Kotak</label>
+                            <input type="number" id="gridPadding" value="10" min="0" max="50" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-xl font-bold text-white text-xs text-center outline-none" oninput="saveAndRender()" title="Jarak area putih dalam kotak ikon">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manajemen Slot & Sorting -->
+                <div class="bg-slate-800/80 backdrop-blur-md p-5 rounded-3xl border border-slate-700/60 shadow-xl space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">Manajemen & Sorting</h3>
+                        <span class="text-[10px] text-slate-400">Status: <span id="selectedStatus" class="font-bold text-red-400">None</span></span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="shuffleGrid()" class="py-2 bg-slate-900 hover:bg-slate-700 border border-slate-700 rounded-xl font-bold text-[11px] text-indigo-300">🔄 Acak Urutan</button>
+                        <button onclick="sortGridAZ()" class="py-2 bg-slate-900 hover:bg-slate-700 border border-slate-700 rounded-xl font-bold text-[11px] text-indigo-300">🔤 Urutkan A-Z</button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button onclick="moveSelected(-1)" class="py-1.5 bg-slate-900 hover:bg-slate-700 rounded-lg text-[10px] font-bold">← Kiri</button>
+                        <button onclick="moveSelected(1)" class="py-1.5 bg-slate-900 hover:bg-slate-700 rounded-lg text-[10px] font-bold">Kanan →</button>
+                        <button onclick="deleteSelected()" class="py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg text-[10px] font-bold transition">Hapus ✕</button>
+                    </div>
+                    <button onclick="clearAll()" class="w-full py-1.5 bg-slate-900 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-lg text-[10px] font-bold">Kosongkan Semua Grid</button>
+                </div>
+
+                <!-- Skala & Posisi Detail -->
+                <div class="bg-slate-800/80 backdrop-blur-md p-5 rounded-3xl border border-slate-700/60 shadow-xl space-y-3">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <h3 class="font-bold text-xs text-indigo-400 uppercase tracking-wider">Skala & Posisi Detail</h3>
+                        <button onclick="resetPosition()" class="px-2 py-0.5 bg-slate-900 hover:bg-indigo-600 rounded text-[9px] text-slate-300">Reset Tengah</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <div class="flex justify-between text-[9px] font-bold text-slate-400 uppercase mb-1">
+                                <span>Ukuran Teks</span><span id="fontSizeVal" class="text-indigo-400">95px</span>
+                            </div>
+                            <input type="range" id="fontSizeRange" min="30" max="250" value="95" class="w-full accent-indigo-500 cursor-pointer" oninput="saveAndRender()">
+                            <div class="flex gap-1 mt-1">
+                                <input type="range" id="textOffsetX" min="-600" max="600" value="0" class="w-full accent-indigo-400 cursor-pointer" oninput="saveAndRender()" title="X Teks">
+                                <input type="range" id="textOffsetY" min="-600" max="600" value="0" class="w-full accent-indigo-400 cursor-pointer" oninput="saveAndRender()" title="Y Teks">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[9px] font-bold text-slate-400 uppercase mb-1">
+                                <span>Ukuran Logo</span><span id="bannerIconSizeVal" class="text-indigo-400">260px</span>
+                            </div>
+                            <input type="range" id="bannerIconSizeRange" min="50" max="600" value="260" class="w-full accent-indigo-500 cursor-pointer" oninput="saveAndRender()">
+                            <div class="flex gap-1 mt-1">
+                                <input type="range" id="logoOffsetX" min="-600" max="600" value="0" class="w-full accent-indigo-400 cursor-pointer" oninput="saveAndRender()" title="X Logo">
+                                <input type="range" id="logoOffsetY" min="-600" max="600" value="0" class="w-full accent-indigo-400 cursor-pointer" oninput="saveAndRender()" title="Y Logo">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Download dengan Loading State -->
+                <div class="bg-slate-800/80 backdrop-blur-md p-4 rounded-3xl border border-slate-700/60 shadow-xl space-y-3">
+                    <select id="exportQuality" class="w-full bg-slate-900 border border-slate-700 text-slate-200 p-2 rounded-xl text-xs font-semibold outline-none">
+                        <option value="0.5">Rendah (x0.5)</option>
+                        <option value="1.0" selected>Standar (x1.0)</option>
+                        <option value="2.0">HD (x2.0)</option>
+                        <option value="3.0">Ultra (x3.0 - High Quality)</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnPng" onclick="downloadPNG()" class="py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs shadow-md transition active:scale-95">Download PNG</button>
+                        <button id="btnSvg" onclick="downloadSVG()" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md transition active:scale-95">Download SVG</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- KOLOM KANAN: PREVIEW KANVAS DENGAN KONTROL ZOOM -->
+            <div class="lg:col-span-7 sticky top-6 space-y-3">
+                <div class="bg-slate-800/80 backdrop-blur-md rounded-3xl shadow-2xl border border-slate-700/80 p-6 flex flex-col items-center relative">
+                    
+                    <!-- FITUR ZOOM KANVAS & INFO -->
+                    <div class="w-full flex justify-between items-center mb-3 px-2 border-b border-slate-700 pb-2">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Live Preview Workspace</span>
+                        <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-xl border border-slate-700">
+                            <button onclick="adjustZoom(-0.15)" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-xs flex items-center justify-center transition" title="Zoom Out">-</button>
+                            <span id="zoomLabel" class="text-[10px] font-bold text-indigo-400 w-12 text-center">100%</span>
+                            <button onclick="adjustZoom(0.15)" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-xs flex items-center justify-center transition" title="Zoom In">+</button>
+                            <button onclick="resetZoom()" class="text-[9px] text-slate-400 hover:text-white px-1.5 py-0.5 border-l border-slate-700 ml-1">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Area Pembungkus Kanvas -->
+                    <div id="canvasWrapper" class="w-full flex justify-center items-center overflow-auto max-h-[700px] p-2 transition-transform duration-200">
+                        <div id="canvasContainer" class="w-full flex justify-center items-center">
+                            <!-- SVG Board Generated Here -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const VALID_ACCESS_CODE = "bengkelofficer2026"; 
+
+        function verifyCode() {
+            const inputVal = document.getElementById('accessCodeInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (inputVal === VALID_ACCESS_CODE) {
+                const modal = document.getElementById('authModal');
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => { modal.style.display = 'none'; }, 500);
+
+                const mainApp = document.getElementById('appMainContent');
+                mainApp.classList.remove('opacity-0', 'pointer-events-none');
+                
+                loadSettings();
+                updateBoard();
+            } else {
+                errorMsg.classList.remove('hidden');
+            }
+        }
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const bannerLogoInput = document.getElementById('bannerLogoInput');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        
+        let uploadedIcons = [];
+        let customBannerLogo = null;
+        let bannerMode = 'logo';
+        let selectedSlotIndex = null;
+        let currentZoom = 1.0;
+
+        // --- FITUR ZOOM KANVAS ---
+        function adjustZoom(amount) {
+            currentZoom = Math.min(Math.max(0.4, currentZoom + amount), 2.2);
+            document.getElementById('zoomLabel').innerText = `${Math.round(currentZoom * 100)}%`;
+            canvasContainer.style.transform = `scale(${currentZoom})`;
+            canvasContainer.style.transformOrigin = 'center center';
+        }
+
+        function resetZoom() {
+            currentZoom = 1.0;
+            document.getElementById('zoomLabel').innerText = "100%";
+            canvasContainer.style.transform = `scale(1)`;
+        }
+
+        // --- FITUR PRESET TEMA (QUICK THEMES) ---
+        function applyTheme(theme) {
+            if (theme === 'shutterstock') {
+                document.getElementById('bannerBgColor').value = '#1E3A8A';
+                document.getElementById('gridBgColor').value = '#FFFFFF';
+                document.getElementById('titleTopColor').value = '#FFFFFF';
+                document.getElementById('titleBottomColor').value = '#60A5FA';
+                document.getElementById('gridOpacityRange').value = 100;
+            } else if (theme === 'neon') {
+                document.getElementById('bannerBgColor').value = '#09090B';
+                document.getElementById('gridBgColor').value = '#18181B';
+                document.getElementById('titleTopColor').value = '#A855F7';
+                document.getElementById('titleBottomColor').value = '#EC4899';
+                document.getElementById('gridOpacityRange').value = 95;
+            } else if (theme === 'minimal') {
+                document.getElementById('bannerBgColor').value = '#F8FAFC';
+                document.getElementById('gridBgColor').value = '#F1F5F9';
+                document.getElementById('titleTopColor').value = '#0F172A';
+                document.getElementById('titleBottomColor').value = '#64748B';
+                document.getElementById('gridOpacityRange').value = 100;
+            }
+            saveAndRender();
+        }
+
+        // --- FITUR AUTO-SAVE (LOCAL STORAGE) ---
+        function saveSettings() {
+            const settings = {
+                titleTop: document.getElementById('titleTop').value,
+                titleBottom: document.getElementById('titleBottom').value,
+                titleTopColor: document.getElementById('titleTopColor').value,
+                titleBottomColor: document.getElementById('titleBottomColor').value,
+                bannerBgColor: document.getElementById('bannerBgColor').value,
+                gridBgColor: document.getElementById('gridBgColor').value,
+                gridOpacityRange: document.getElementById('gridOpacityRange').value,
+                customWidth: document.getElementById('customWidth').value,
+                customHeight: document.getElementById('customHeight').value,
+                gridCols: document.getElementById('gridCols').value,
+                gridRows: document.getElementById('gridRows').value,
+                gridPadding: document.getElementById('gridPadding').value,
+                fontSizeRange: document.getElementById('fontSizeRange').value,
+                bannerIconSizeRange: document.getElementById('bannerIconSizeRange').value,
+                textOffsetX: document.getElementById('textOffsetX').value,
+                textOffsetY: document.getElementById('textOffsetY').value,
+                logoOffsetX: document.getElementById('logoOffsetX').value,
+                logoOffsetY: document.getElementById('logoOffsetY').value,
+                bannerMode: bannerMode
+            };
+            localStorage.setItem('bengkel_officer_settings_v4', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('bengkel_officer_settings_v4');
+            if (saved) {
+                try {
+                    const s = JSON.parse(saved);
+                    if(s.titleTop !== undefined) document.getElementById('titleTop').value = s.titleTop;
+                    if(s.titleBottom !== undefined) document.getElementById('titleBottom').value = s.titleBottom;
+                    if(s.titleTopColor !== undefined) document.getElementById('titleTopColor').value = s.titleTopColor;
+                    if(s.titleBottomColor !== undefined) document.getElementById('titleBottomColor').value = s.titleBottomColor;
+                    if(s.bannerBgColor !== undefined) document.getElementById('bannerBgColor').value = s.bannerBgColor;
+                    if(s.gridBgColor !== undefined) document.getElementById('gridBgColor').value = s.gridBgColor;
+                    if(s.gridOpacityRange !== undefined) document.getElementById('gridOpacityRange').value = s.gridOpacityRange;
+                    if(s.customWidth !== undefined) document.getElementById('customWidth').value = s.customWidth;
+                    if(s.customHeight !== undefined) document.getElementById('customHeight').value = s.customHeight;
+                    if(s.gridCols !== undefined) document.getElementById('gridCols').value = s.gridCols;
+                    if(s.gridRows !== undefined) document.getElementById('gridRows').value = s.gridRows;
+                    if(s.gridPadding !== undefined) document.getElementById('gridPadding').value = s.gridPadding;
+                    if(s.fontSizeRange !== undefined) document.getElementById('fontSizeRange').value = s.fontSizeRange;
+                    if(s.bannerIconSizeRange !== undefined) document.getElementById('bannerIconSizeRange').value = s.bannerIconSizeRange;
+                    if(s.textOffsetX !== undefined) document.getElementById('textOffsetX').value = s.textOffsetX;
+                    if(s.textOffsetY !== undefined) document.getElementById('textOffsetY').value = s.textOffsetY;
+                    if(s.logoOffsetX !== undefined) document.getElementById('logoOffsetX').value = s.logoOffsetX;
+                    if(s.logoOffsetY !== undefined) document.getElementById('logoOffsetY').value = s.logoOffsetY;
+                    if(s.bannerMode !== undefined) setBannerMode(s.bannerMode, false);
+                } catch(e) { console.error("Error loading settings:", e); }
+            }
+        }
+
+        function saveAndRender() {
+            saveSettings();
+            updateBoard();
+        }
+
+        function setGridTransparent() {
+            document.getElementById('gridOpacityRange').value = 0;
+            saveAndRender();
+        }
+
+        function resetPosition() {
+            document.getElementById('textOffsetX').value = 0;
+            document.getElementById('textOffsetY').value = 0;
+            document.getElementById('logoOffsetX').value = 0;
+            document.getElementById('logoOffsetY').value = 0;
+            saveAndRender();
+        }
+
+        function setBannerMode(mode, render = true) {
+            bannerMode = mode;
+            ['btnModeLogo', 'btnModeText', 'btnModeNone'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.className = "px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+            });
+            if(mode === 'logo') {
+                document.getElementById('btnModeLogo').className = "px-2.5 py-1 rounded-lg text-xs font-bold transition tab-active";
+                document.getElementById('logoUploadSection').style.display = 'block';
+            } else if(mode === 'text') {
+                document.getElementById('btnModeText').className = "px-2.5 py-1 rounded-lg text-xs font-bold transition tab-active";
+                document.getElementById('logoUploadSection').style.display = 'none';
+            } else {
+                document.getElementById('btnModeNone').className = "px-2.5 py-1 rounded-lg text-xs font-bold transition tab-active";
+                document.getElementById('logoUploadSection').style.display = 'none';
+            }
+            if (render) saveAndRender();
+        }
+
+        function shuffleGrid() {
+            if (uploadedIcons.length === 0) return alert('Grid masih kosong.');
+            uploadedIcons.sort(() => Math.random() - 0.5);
+            selectedSlotIndex = null;
+            document.getElementById('selectedStatus').innerText = "None";
+            document.getElementById('selectedStatus').className = "font-bold text-red-400";
+            updateBoard();
+        }
+
+        function sortGridAZ() {
+            if (uploadedIcons.length === 0) return alert('Grid masih kosong.');
+            uploadedIcons.sort((a, b) => a.name.localeCompare(b.name));
+            selectedSlotIndex = null;
+            document.getElementById('selectedStatus').innerText = "None";
+            document.getElementById('selectedStatus').className = "font-bold text-red-400";
+            updateBoard();
+        }
+
+        bannerLogoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && (file.type.includes("svg") || file.type.includes("png"))) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    customBannerLogo = ev.target.result;
+                    document.getElementById('resetLogoBtn').classList.remove('hidden');
+                    updateBoard();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function resetBannerLogo() {
+            customBannerLogo = null;
+            bannerLogoInput.value = "";
+            document.getElementById('resetLogoBtn').classList.add('hidden');
+            updateBoard();
+        }
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            processFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => processFiles(e.target.files));
+
+        function processFiles(files) {
+            const max = parseInt(document.getElementById('gridCols').value) * parseInt(document.getElementById('gridRows').value);
+            
+            Array.from(files).forEach(file => {
+                if ((file.type.includes("svg") || file.type.includes("png")) && uploadedIcons.length < max) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        uploadedIcons.push({ name: file.name, dataUrl: e.target.result });
+                        updateBoard();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            const dropText = document.getElementById('dropText');
+            dropText.innerText = "Sukses Menambahkan File!";
+            dropText.classList.add('text-emerald-400');
+            setTimeout(() => {
+                dropText.innerText = "Tarik & Lepas File Ikon (SVG/PNG)";
+                dropText.classList.remove('text-emerald-400');
+            }, 3000);
+        }
+
+        function handleSlotClick(index) {
+            if (index >= uploadedIcons.length) return;
+            selectedSlotIndex = (selectedSlotIndex === index) ? null : index;
+            
+            const statusEl = document.getElementById('selectedStatus');
+            if (selectedSlotIndex !== null) {
+                statusEl.innerText = `#${selectedSlotIndex + 1} Dipilih`;
+                statusEl.className = "font-bold text-indigo-400";
+            } else {
+                statusEl.innerText = "None";
+                statusEl.className = "font-bold text-red-400";
+            }
+            updateBoard();
+        }
+
+        function moveSelected(direction) {
+            if (selectedSlotIndex === null) return alert('Pilih salah satu kotak gambar terlebih dahulu pada grid.');
+            const newIndex = selectedSlotIndex + direction;
+            if (newIndex < 0 || newIndex >= uploadedIcons.length) return;
+
+            const temp = uploadedIcons[selectedSlotIndex];
+            uploadedIcons[selectedSlotIndex] = uploadedIcons[newIndex];
+            uploadedIcons[newIndex] = temp;
+            selectedSlotIndex = newIndex;
+            
+            document.getElementById('selectedStatus').innerText = `#${selectedSlotIndex + 1} Dipilih`;
+            updateBoard();
+        }
+
+        function deleteSelected() {
+            if (selectedSlotIndex === null) return alert('Pilih salah satu kotak gambar terlebih dahulu pada grid.');
+            uploadedIcons.splice(selectedSlotIndex, 1);
+            selectedSlotIndex = null;
+            document.getElementById('selectedStatus').innerText = "None";
+            document.getElementById('selectedStatus').className = "font-bold text-red-400";
+            updateBoard();
+        }
+
+        function generateSvgString(includeUI = false, scaleMultiplier = 1) {
+            const currentBoardWidth = parseInt(document.getElementById('customWidth').value) || 5400;
+            const currentBoardHeight = parseInt(document.getElementById('customHeight').value) || 2200;
+
+            const cols = parseInt(document.getElementById('gridCols').value);
+            const rows = parseInt(document.getElementById('gridRows').value);
+            const padding = parseInt(document.getElementById('gridPadding').value) || 10;
+            const maxFiles = cols * rows;
+
+            const w = currentBoardWidth * scaleMultiplier;
+            const h = currentBoardHeight * scaleMultiplier;
+
+            let bannerWidth = (w / 3);
+            let gridAreaWidth = w - bannerWidth;
+
+            if (bannerMode === 'none') {
+                bannerWidth = 0;
+                gridAreaWidth = w;
+            }
+
+            const cellWidth = gridAreaWidth / cols;
+            const cellHeight = h / rows;
+            // Mempertimbangkan padding agar ikon memiliki ruang bernapas
+            const iconSize = Math.min(cellWidth, cellHeight) * (0.65 - (padding / 100));
+
+            const gridBgColor = document.getElementById('gridBgColor').value;
+            const gridOpacity = parseInt(document.getElementById('gridOpacityRange').value) / 100;
+            document.getElementById('gridOpacityVal').innerText = `${document.getElementById('gridOpacityRange').value}%`;
+
+            const textOffsetX = parseInt(document.getElementById('textOffsetX').value) * scaleMultiplier;
+            const textOffsetY = parseInt(document.getElementById('textOffsetY').value) * scaleMultiplier;
+            const logoOffsetX = parseInt(document.getElementById('logoOffsetX').value) * scaleMultiplier;
+            const logoOffsetY = parseInt(document.getElementById('logoOffsetY').value) * scaleMultiplier;
+
+            let containerBgStyle = includeUI && gridOpacity === 0 ? 'background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%); background-size: 20px 20px;' : '';
+            let svgStyle = includeUI ? `max-width: 100%; height: auto; border-radius: 8px; ${containerBgStyle}` : '';
+            
+            let svgContent = `
+                <svg id="masterSvg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${w} ${h}" style="${svgStyle}">
+                    <rect x="0" y="0" width="${w}" height="${h}" fill="#FFFFFF" fill-opacity="0" />
+            `;
+
+            svgContent += `<rect x="${bannerWidth}" y="0" width="${gridAreaWidth}" height="${h}" fill="${gridBgColor}" fill-opacity="${gridOpacity}" />`;
+
+            if (bannerMode !== 'none') {
+                const bannerBgColor = document.getElementById('bannerBgColor').value;
+                const titleTop = document.getElementById('titleTop').value.toUpperCase() || 'TITLE';
+                const titleBottom = document.getElementById('titleBottom').value.toUpperCase() || 'ICONS';
+                const titleTopColor = document.getElementById('titleTopColor').value;
+                const titleBottomColor = document.getElementById('titleBottomColor').value;
+                const fontSize = parseInt(document.getElementById('fontSizeRange').value) * scaleMultiplier;
+                const bannerIconSize = parseInt(document.getElementById('bannerIconSizeRange').value) * scaleMultiplier;
+
+                svgContent += `<rect x="0" y="0" width="${bannerWidth}" height="${h}" fill="${bannerBgColor}" />`;
+
+                if (bannerMode === 'logo') {
+                    const logoCenterY = h / 2 - (170 * scaleMultiplier);
+                    
+                    svgContent += `<g transform="translate(${logoOffsetX}, ${logoOffsetY})">`;
+                    if (customBannerLogo) {
+                        svgContent += `<image href="${customBannerLogo}" xlink:href="${customBannerLogo}" x="${bannerWidth/2 - bannerIconSize/2}" y="${logoCenterY - bannerIconSize/2 + (20 * scaleMultiplier)}" width="${bannerIconSize}" height="${bannerIconSize}" preserveAspectRatio="xMidYMid meet" />`;
+                    } else {
+                        svgContent += `
+                            <circle cx="${bannerWidth/2}" cy="${logoCenterY}" r="${bannerIconSize/2.2}" fill="none" stroke="${titleTopColor}" stroke-width="${12 * scaleMultiplier}" />
+                            <path d="M${bannerWidth/2 + bannerIconSize/4} ${logoCenterY - bannerIconSize/4} c-${40*scaleMultiplier} 0-${75*scaleMultiplier} ${22*scaleMultiplier}-${95*scaleMultiplier} ${55*scaleMultiplier} l-${65*scaleMultiplier} ${65*scaleMultiplier} l${25*scaleMultiplier}-${25*scaleMultiplier} c${12*scaleMultiplier} ${7*scaleMultiplier} ${25*scaleMultiplier} ${11*scaleMultiplier} ${40*scaleMultiplier} ${11*scaleMultiplier} c${40*scaleMultiplier} 0 ${75*scaleMultiplier}-${32*scaleMultiplier} ${75*scaleMultiplier}-${75*scaleMultiplier} v-${31*scaleMultiplier} h-${4*scaleMultiplier} z" fill="${titleTopColor}" />
+                        `;
+                    }
+                    svgContent += `</g>`;
+                    
+                    svgContent += `<g transform="translate(${textOffsetX}, ${textOffsetY})">`;
+                    svgContent += `
+                        <text x="${bannerWidth/2}" y="${h/2 + (70 * scaleMultiplier)}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="${titleTopColor}" text-anchor="middle">${titleTop}</text>
+                        <text x="${bannerWidth/2}" y="${h/2 + (70 * scaleMultiplier) + fontSize * 1.1}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="${titleBottomColor}" text-anchor="middle">${titleBottom}</text>
+                    `;
+                    svgContent += `</g>`;
+
+                } else {
+                    svgContent += `<g transform="translate(${textOffsetX}, ${textOffsetY})">`;
+                    svgContent += `
+                        <text x="${bannerWidth/2}" y="${h/2 - (20 * scaleMultiplier)}" font-family="Arial, sans-serif" font-size="${fontSize * 1.1}" font-weight="bold" fill="${titleTopColor}" text-anchor="middle">${titleTop}</text>
+                        <text x="${bannerWidth/2}" y="${h/2 + fontSize * 1.1}" font-family="Arial, sans-serif" font-size="${fontSize * 1.1}" font-weight="bold" fill="${titleBottomColor}" text-anchor="middle">${titleBottom}</text>
+                    `;
+                    svgContent += `</g>`;
+                }
+            }
+
+            for (let i = 0; i < maxFiles; i++) {
+                const r = Math.floor(i / cols);
+                const c = i % cols;
+                const xCenter = bannerWidth + (c * cellWidth) + (cellWidth / 2);
+                const yCenter = (r * cellHeight) + (cellHeight / 2);
+                
+                const isSelected = includeUI && (selectedSlotIndex === i);
+                const strokeColor = isSelected ? '#ef4444' : '#e2e8f0';
+                const strokeWidth = isSelected ? (6 * scaleMultiplier) : (4 * scaleMultiplier);
+
+                if (i < uploadedIcons.length) {
+                    const icon = uploadedIcons[i];
+                    const boxX = xCenter - iconSize/2 - (10 * scaleMultiplier);
+                    const boxY = yCenter - iconSize/2 - (10 * scaleMultiplier);
+                    const boxSize = iconSize + (20 * scaleMultiplier);
+                    const rxVal = 16 * scaleMultiplier;
+
+                    if (includeUI) {
+                        svgContent += `
+                            <g class="grid-slot" onclick="handleSlotClick(${i})">
+                                <rect x="${boxX}" y="${boxY}" width="${boxSize}" height="${boxSize}" fill="${isSelected ? 'rgba(239, 68, 68, 0.1)' : 'transparent'}" stroke="${strokeColor}" stroke-width="${strokeWidth}" rx="${rxVal}" style="cursor: pointer;"/>
+                                <image href="${icon.dataUrl}" xlink:href="${icon.dataUrl}" x="${xCenter - iconSize/2}" y="${yCenter - iconSize/2}" width="${iconSize}" height="${iconSize}" preserveAspectRatio="xMidYMid meet" style="cursor: pointer;"/>
+                            </g>
+                        `;
+                    } else {
+                        svgContent += `
+                            <image href="${icon.dataUrl}" xlink:href="${icon.dataUrl}" x="${xCenter - iconSize/2}" y="${yCenter - iconSize/2}" width="${iconSize}" height="${iconSize}" preserveAspectRatio="xMidYMid meet" />
+                        `;
+                    }
+                } else {
+                    if (includeUI) {
+                        const boxX = xCenter - iconSize/2;
+                        const boxY = yCenter - iconSize/2;
+                        svgContent += `<rect x="${boxX}" y="${boxY}" width="${iconSize}" height="${iconSize}" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-dasharray="${10*scaleMultiplier},${10*scaleMultiplier}" rx="${20*scaleMultiplier}"/>`;
+                    }
+                }
+            }
+
+            svgContent += `</svg>`;
+            return svgContent;
+        }
+
+        function updateBoard() {
+            const cols = parseInt(document.getElementById('gridCols').value);
+            const rows = parseInt(document.getElementById('gridRows').value);
+            const maxFiles = cols * rows;
+            
+            document.getElementById('fileCount').innerText = uploadedIcons.length;
+            document.getElementById('maxFiles').innerText = maxFiles;
+
+            if (uploadedIcons.length > maxFiles) uploadedIcons = uploadedIcons.slice(0, maxFiles);
+
+            document.getElementById('fontSizeVal').innerText = document.getElementById('fontSizeRange').value + 'px';
+            document.getElementById('bannerIconSizeVal').innerText = document.getElementById('bannerIconSizeRange').value + 'px';
+
+            if(canvasContainer) {
+                // Tampilan Empty State profesional jika belum ada ikon
+                if (uploadedIcons.length === 0) {
+                    canvasContainer.innerHTML = `
+                        <div class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-700 rounded-2xl text-slate-400 w-full min-h-[450px]">
+                            <svg class="w-16 h-16 mb-4 text-indigo-500/50 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <p class="font-bold text-sm text-slate-300">Belum ada ikon di dalam grid.</p>
+                            <p class="text-xs text-slate-500 mt-1">Tarik & lepas file SVG/PNG di sebelah kiri untuk mulai membuat board.</p>
+                        </div>
+                    `;
+                } else {
+                    canvasContainer.innerHTML = generateSvgString(true, 1);
+                }
+            }
+        }
+
+        function triggerDownload(dataUri, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = dataUri;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- FITUR LOADING STATE SAAT EKSPOR ---
+        function downloadSVG() {
+            if (uploadedIcons.length === 0) return alert('Grid masih kosong.');
+            const btn = document.getElementById('btnSvg');
+            const originalText = btn.innerText;
+            btn.innerText = "Memproses...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const qualityMultiplier = parseFloat(document.getElementById('exportQuality').value);
+                const cleanSvgData = generateSvgString(false, qualityMultiplier);
+                const blob = new Blob([cleanSvgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                triggerDownload(url, 'Bengkel_officer_Board_Master.svg');
+                URL.revokeObjectURL(url);
+
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }, 300);
+        }
+
+        function downloadPNG() {
+            if (uploadedIcons.length === 0) return alert('Grid masih kosong.');
+            const btn = document.getElementById('btnPng');
+            const originalText = btn.innerText;
+            btn.innerText = "Memproses HD...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const qualityMultiplier = parseFloat(document.getElementById('exportQuality').value);
+                const cleanSvgData = generateSvgString(false, qualityMultiplier);
+
+                const currentBoardWidth = parseInt(document.getElementById('customWidth').value) || 5400;
+                const currentBoardHeight = parseInt(document.getElementById('customHeight').value) || 2200;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = currentBoardWidth * qualityMultiplier;
+                canvas.height = currentBoardHeight * qualityMultiplier;
+                const ctx = canvas.getContext('2d');
+                
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    triggerDownload(canvas.toDataURL('image/png', 1.0), 'Bengkel_officer_Board_Preview.png');
+                    
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                };
+                img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanSvgData)));
+            }, 300);
+        }
+
+        function clearAll() {
+            uploadedIcons = [];
+            selectedSlotIndex = null;
+            document.getElementById('selectedStatus').innerText = "None";
+            document.getElementById('selectedStatus').className = "font-bold text-red-400";
+            document.getElementById('fileInput').value = "";
+            saveAndRender();
+        }
+    </script>
+</body>
+</html>
